@@ -66,7 +66,7 @@ def get_chrome_path(chrome_path=None):
 
 class Screenshot:
 
-    def __init__(self, center_df=True, max_rows=None, max_cols=None, chrome_path=None, 
+    def __init__(self, center_df=True, max_rows=None, max_cols=None, chrome_path=None,
                  fontsize=18, encode_base64=True, limit_crop=True):
         self.center_df = center_df
         self.max_rows = max_rows
@@ -94,12 +94,13 @@ class Screenshot:
         with open(temp_html, "w") as f:
             f.write(self.html)
 
-        with open(temp_img, "wb") as f:        
+        with open(temp_img, "wb") as f:
             args = [
                 "--enable-logging",
                 "--disable-gpu",
-                "--headless"
-                ]
+                "--headless",
+                "--crash-dumps-dir=/tmp",
+            ]
 
             if self.ss_width and self.ss_height:
                 args.append(f"--window-size={self.ss_width},{self.ss_height}")
@@ -108,7 +109,7 @@ class Screenshot:
                 "--hide-scrollbars",
                 f"--screenshot={str(temp_img)}",
                 str(temp_html)
-                ]
+            ]
 
             subprocess.run(executable=self.chrome_path, args=args)
 
@@ -133,7 +134,7 @@ class Screenshot:
         if all_white_horiz[-30:].sum() != 30:
             self.ss_height = int(self.ss_height * 1.5)
             enlarge = True
-            
+
         if enlarge:
             return self.take_screenshot()
 
@@ -154,7 +155,7 @@ class Screenshot:
         new_img = img[top:bottom, left:right]
         return new_img
 
-    def finalize_image(self, img):        
+    def finalize_image(self, img):
         buffer = io.BytesIO()
         mimage.imsave(buffer, img)
         img_str = buffer.getvalue()
@@ -171,12 +172,14 @@ class Screenshot:
     def repr_png_wrapper(self):
         from pandas.io.formats.style import Styler
         ss = self
+
         def _repr_png_(self):
             if isinstance(self, Styler):
                 html = '<div>' + self.render() + '</div>'
             else:
                 html = self.to_html(max_rows=ss.max_rows, max_cols=ss.max_cols, notebook=True)
             return ss.run(html)
+
         return _repr_png_
 
 
